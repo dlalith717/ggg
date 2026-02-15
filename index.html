@@ -1,0 +1,167 @@
+!DOCTYPE html>
+<html>
+<head>
+    <title>AI Healthcare Risk Triage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+
+        .full {
+            grid-column: span 2;
+        }
+
+        button {
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .low { background: #d4edda; color: #155724; }
+        .medium { background: #fff3cd; color: #856404; }
+        .high { background: #f8d7da; color: #721c24; }
+
+        .loading {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>AI Healthcare Risk Triage System</h1>
+
+    <form id="triageForm">
+        <div class="grid">
+
+            <input type="number" name="age" placeholder="Age" required>
+
+            <select name="gender" required>
+                <option value="">Select Gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </select>
+
+            <input type="text" name="bloodPressure" placeholder="Blood Pressure (e.g. 120/80)" required>
+
+            <input type="number" name="heartRate" placeholder="Heart Rate" required>
+
+            <input type="number" step="0.1" name="temperature" placeholder="Temperature (°C)" required>
+
+            <input type="text" name="conditions" placeholder="Pre-existing Conditions">
+
+            <textarea name="symptoms" class="full" placeholder="Enter Symptoms (comma separated)" required></textarea>
+
+            <button type="submit" class="full">Predict Risk</button>
+
+        </div>
+    </form>
+
+    <div class="loading" id="loading">
+        Analyzing patient data...
+    </div>
+
+    <div class="result" id="resultBox">
+        <h2>Prediction Result</h2>
+        <p><strong>Risk Level:</strong> <span id="riskLevel"></span></p>
+        <p><strong>Recommended Department:</strong> <span id="department"></span></p>
+        <p><strong>Confidence Score:</strong> <span id="confidence"></span></p>
+    </div>
+
+</div>
+
+<script>
+document.getElementById("triageForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const loading = document.getElementById("loading");
+    const resultBox = document.getElementById("resultBox");
+
+    loading.style.display = "block";
+    resultBox.style.display = "none";
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch("http://localhost:5000/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        loading.style.display = "none";
+        resultBox.style.display = "block";
+
+        document.getElementById("riskLevel").innerText = result.risk_level;
+        document.getElementById("department").innerText = result.department;
+        document.getElementById("confidence").innerText = result.confidence + "%";
+
+        resultBox.className = "result " + result.risk_level.toLowerCase();
+
+    } catch (error) {
+        loading.style.display = "none";
+        alert("Error connecting to backend!");
+    }
+});
+</script>
+
+</body>
+</html>
